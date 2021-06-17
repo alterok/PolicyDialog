@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="alterok_dialog_policy_accept">Accept</string>
+    <string name="alterok_dialog_policy_exit_app">Exit App</string>
+    <string name="alterok_dialog_policy_tos">Terms of Service</string>
+    <string name="alterok_dialog_policy_tos_subtext">If you click on Accept, you acknowledge that you agree to our {terms}Terms and Conditions{/terms} and implies that you have read our {privacy}Privacy Policy{/privacy}.</string>
+</resources>
