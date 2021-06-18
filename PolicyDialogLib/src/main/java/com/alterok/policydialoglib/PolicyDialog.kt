@@ -9,6 +9,7 @@ import android.text.Spanned
 import android.text.method.LinkMovementMethod
 import android.util.Log
 import android.view.View
+import android.widget.TextView
 import androidx.appcompat.app.AlertDialog
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.graphics.ColorUtils
@@ -17,7 +18,8 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.LifecycleObserver
 import androidx.lifecycle.OnLifecycleEvent
 import androidx.recyclerview.widget.LinearLayoutManager
-import kotlinx.android.synthetic.main.dialog_policy.view.*
+import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.button.MaterialButton
 
 private const val TAG = "PolicyDialog"
 
@@ -118,77 +120,98 @@ class PolicyDialog private constructor(
         val dialogView = layoutInflater.inflate(R.layout.dialog_policy, null, false)
 
         //dialogBackgroundColor
-        dialogView.alterok_dialog_policy_container.setBackgroundColor(builder.backgroundColor)
-        dialogView.alterok_dialog_policy_recyclerview.backgroundTintList = ColorStateList.valueOf(
-            if (ColorUtils.calculateLuminance(builder.backgroundColor) <= 0.5f)
-                Color.parseColor("#14F5F5F5")
-            else
-                Color.parseColor("#14080808")
-        )
+        dialogView.findViewById<View>(R.id.alterok_dialog_policy_container)
+            .setBackgroundColor(builder.backgroundColor)
 
-        //AcceptButton Styling
-        dialogView.alterok_dialog_policy_accept_button.setTextColor(builder.acceptTextColor)
-        dialogView.alterok_dialog_policy_title.text = builder.dialogTitle
-        dialogView.alterok_dialog_policy_title.setTextColor(builder.dialogTitleTextColor)
+        //AcceptButton
+        dialogView.findViewById<MaterialButton>(R.id.alterok_dialog_policy_accept_button)
+            .apply {
+                setTextColor(builder.acceptTextColor)
 
-        dialogView.alterok_dialog_policy_tos_subtext.text = formatToHtml(builder.policySubText)
-        dialogView.alterok_dialog_policy_tos_subtext.movementMethod =
-            LinkMovementMethod.getInstance()
-        dialogView.alterok_dialog_policy_tos_subtext.setLinkTextColor(builder.linkTextColor)
-        dialogView.alterok_dialog_policy_tos_subtext.setTextColor(builder.termsSubTextColor)
+                //AcceptButton Styling
+                if (builder.isOutlineButtonStyle) {
+                    rippleColor =
+                        ColorStateList.valueOf(
+                            ColorUtils.setAlphaComponent(
+                                builder.acceptButtonColor,
+                                64
+                            )
+                        )
+                } else {
+                    backgroundTintList =
+                        ColorStateList.valueOf(builder.acceptButtonColor)
+                    rippleColor =
+                        ColorStateList.valueOf(
+                            ColorUtils.setAlphaComponent(builder.acceptTextColor, 64)
+                        )
+                }
 
-        if (builder.isOutlineButtonStyle) {
-            dialogView.alterok_dialog_policy_accept_button.rippleColor =
-                ColorStateList.valueOf(ColorUtils.setAlphaComponent(builder.acceptButtonColor, 64))
-        } else {
-            dialogView.alterok_dialog_policy_accept_button.backgroundTintList =
-                ColorStateList.valueOf(builder.acceptButtonColor)
-            dialogView.alterok_dialog_policy_accept_button.rippleColor =
+                strokeColor =
+                    ColorStateList.valueOf(builder.acceptButtonColor)
+                text = builder.acceptButtonText
+                setTextColor(builder.acceptTextColor)
+
+                setOnClickListener {
+                    hasAccepted = true
+
+                    policyDialogButtonListeners.forEach {
+                        it.onAccept(true)
+                    }
+
+                    destroy()
+                }
+            }
+
+        //CancelButton
+        dialogView.findViewById<MaterialButton>(R.id.alterok_dialog_policy_cancel_button).apply {
+            text = builder.cancelButtonText
+            setTextColor(builder.cancelTextColor)
+            rippleColor =
                 ColorStateList.valueOf(
-                    ColorUtils.setAlphaComponent(builder.acceptTextColor, 64)
+                    ColorUtils.setAlphaComponent(builder.cancelTextColor, 64)
                 )
-        }
 
-        dialogView.alterok_dialog_policy_accept_button.strokeColor =
-            ColorStateList.valueOf(builder.acceptButtonColor)
-        dialogView.alterok_dialog_policy_accept_button.text = builder.acceptButtonText
-        dialogView.alterok_dialog_policy_accept_button.setTextColor(builder.acceptTextColor)
-
-        dialogView.alterok_dialog_policy_cancel_button.text = builder.cancelButtonText
-        dialogView.alterok_dialog_policy_cancel_button.setTextColor(builder.cancelTextColor)
-        dialogView.alterok_dialog_policy_cancel_button.rippleColor =
-            ColorStateList.valueOf(
-                ColorUtils.setAlphaComponent(builder.cancelTextColor, 64)
-            )
-
-        dialogView.alterok_dialog_policy_recyclerview.layoutManager =
-            LinearLayoutManager(dialogView.context)
-
-
-        dialogView.alterok_dialog_policy_accept_button.setOnClickListener {
-            hasAccepted = true
-
-            policyDialogButtonListeners.forEach {
-                it.onAccept(true)
+            setOnClickListener {
+                policyDialogButtonListeners.forEach {
+                    it.onCancel()
+                }
+                destroy()
             }
-
-            destroy()
         }
 
-        dialogView.alterok_dialog_policy_cancel_button.setOnClickListener {
-            policyDialogButtonListeners.forEach {
-                it.onCancel()
+        //Policy Title
+        dialogView.findViewById<TextView>(R.id.alterok_dialog_policy_title).apply {
+            text = builder.dialogTitle
+            setTextColor(builder.dialogTitleTextColor)
+        }
+
+        //TOS Subtext
+        dialogView.findViewById<TextView>(R.id.alterok_dialog_policy_tos_subtext).apply {
+            text = formatToHtml(builder.policySubText)
+            movementMethod = LinkMovementMethod.getInstance()
+            setLinkTextColor(builder.linkTextColor)
+            setTextColor(builder.termsSubTextColor)
+        }
+
+        //Policies List
+        dialogView.findViewById<RecyclerView>(R.id.alterok_dialog_policy_recyclerview)
+            .apply {
+                backgroundTintList = ColorStateList.valueOf(
+                    if (ColorUtils.calculateLuminance(builder.backgroundColor) <= 0.5f)
+                        Color.parseColor("#14F5F5F5")
+                    else
+                        Color.parseColor("#14080808")
+                )
+
+                layoutManager = LinearLayoutManager(dialogView.context)
+
+                PrivacyPolicyAdapter(builder.policyLineTextColor).apply {
+                    adapter = this
+                    setPolicies(builder.policyLines)
+                }
+
+                isVisible = builder.policyLines.isNotEmpty()
             }
-            destroy()
-        }
-
-        PrivacyPolicyAdapter(builder.policyLineTextColor).apply {
-            dialogView.alterok_dialog_policy_recyclerview.adapter = this
-            setPolicies(builder.policyLines)
-        }
-
-        dialogView.alterok_dialog_policy_recyclerview.isVisible =
-            builder.policyLines.isNotEmpty()
 
         return dialogView
     }
