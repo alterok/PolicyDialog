@@ -1,0 +1,17 @@
+<?xml version="1.0" encoding="utf-8"?>
+<androidx.appcompat.widget.AppCompatCheckedTextView xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent"
+    android:layout_height="wrap_content"
+    android:background="?selectableItemBackgroundBorderless"
+    android:checkMark="?android:listChoiceIndicatorMultiple"
+    android:checkMarkTint="#CD3A3A"
+    android:checked="true"
+    android:clickable="true"
+    android:focusable="true"
+    android:gravity="center|start"
+    android:letterSpacing="0.025"
+    android:paddingVertical="8dp"
+    android:text="@string/alterok_dialog_policy_tos"
+    android:textAllCaps="false"
+    android:textAppearance="@style/TextAppearance.MaterialComponents.Overline"
+    android:textSize="12sp" />

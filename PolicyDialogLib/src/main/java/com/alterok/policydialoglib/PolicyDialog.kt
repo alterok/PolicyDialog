@@ -34,6 +34,7 @@ class PolicyDialog private constructor(
     interface OnDialogButtonListener {
         fun onAccept(fromUser: Boolean)
         fun onCancel()
+        fun onOptionClicked(optionIndex: Int, isChecked: Boolean)
     }
 
     private var policyDialogButtonListeners: MutableList<OnDialogButtonListener> = mutableListOf()
@@ -56,6 +57,8 @@ class PolicyDialog private constructor(
     var dialog: AlertDialog? = null
         private set
 
+    private val isInEurope = EUHelper.isEu(activity)
+
     init {
         lifecycle.addObserver(this)
     }
@@ -70,6 +73,7 @@ class PolicyDialog private constructor(
         }
 
         val policyLines: MutableList<String> = mutableListOf()
+        val dialogOptions: MutableList<DialogOption> = mutableListOf()
 
         var allowLogging = true
 
@@ -87,6 +91,9 @@ class PolicyDialog private constructor(
         var termsSubTextColor = Color.DKGRAY
         var policyLineTextColor = Color.DKGRAY
 
+        var optionTextColor = Color.DKGRAY
+        var optionCheckMarkColor = Color.DKGRAY
+
         var privacyPolicyURL = "https://localhost"
         var termsOfServiceURL = "https://localhost"
 
@@ -96,8 +103,15 @@ class PolicyDialog private constructor(
         var acceptButtonText = activity.getString(R.string.alterok_dialog_policy_accept)
         var cancelButtonText = activity.getString(R.string.alterok_dialog_policy_exit_app)
 
+        var showInEUOnly = false
+
         fun addPolicyLine(policy: String): Builder {
             policyLines.add(policy)
+            return this
+        }
+
+        fun addOption(dialogOption: DialogOption): Builder {
+            dialogOptions.add(dialogOption)
             return this
         }
 
@@ -213,6 +227,34 @@ class PolicyDialog private constructor(
                 isVisible = builder.policyLines.isNotEmpty()
             }
 
+        //Dialog Options
+        dialogView.findViewById<RecyclerView>(R.id.alterok_dialog_policy_option_recyclerview)
+            .apply {
+                layoutManager = LinearLayoutManager(dialogView.context)
+
+                DialogOptionAdapter(builder.optionTextColor, builder.optionCheckMarkColor,
+                    object : OnDialogOptionClickListener {
+                        override fun onDialogOptionClick(
+                            isChecked: Boolean,
+                            dialogOption: DialogOption
+                        ) {
+                            policyDialogButtonListeners.forEach {
+                                it.onOptionClicked(
+                                    builder.dialogOptions.indexOf(dialogOption),
+                                    isChecked
+                                )
+                            }
+                        }
+                    }).apply {
+                    adapter = this
+                    setOptions(builder.dialogOptions.asSequence().filter {
+                        !(!isInEurope && it.forEUOnly)
+                    }.toList())
+                }
+
+                isVisible = builder.dialogOptions.isNotEmpty()
+            }
+
         return dialogView
     }
 
@@ -251,11 +293,25 @@ class PolicyDialog private constructor(
             if (dialog?.isShowing == true) {
                 dialog?.dismiss()
             }
-            dialog = dialogBuilder.create()
-            dialog?.setView(createDialogView())
-            dialog?.setCancelable(false)
-            dialog?.setCanceledOnTouchOutside(false)
-            dialog?.show()
+
+            if (builder.showInEUOnly && !isInEurope) {
+                Log.w(
+                    TAG,
+                    "Not in EU, Policy and ToS accepted by default. To show PolicyDialog in EU, please set showInEUOnly= true on the PolicyDialog builder."
+                )
+
+                hasAccepted = true
+
+                policyDialogButtonListeners.forEach {
+                    it.onAccept(false)
+                }
+            } else {
+                dialog = dialogBuilder.create()
+                dialog?.setView(createDialogView())
+                dialog?.setCancelable(false)
+                dialog?.setCanceledOnTouchOutside(false)
+                dialog?.show()
+            }
         }
     }
 
@@ -285,3 +341,5 @@ class PolicyDialog private constructor(
         hasAccepted = false
     }
 }
+
+class DialogOption(val title: String, val defaultValue: Boolean, val forEUOnly: Boolean)

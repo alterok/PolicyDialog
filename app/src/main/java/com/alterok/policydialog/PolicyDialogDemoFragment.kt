@@ -9,6 +9,7 @@ import android.view.ViewGroup
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import com.alterok.policydialog.databinding.FragmentPolicyDialogDemoBinding
+import com.alterok.policydialoglib.DialogOption
 import com.alterok.policydialoglib.PolicyDialog
 
 /**
@@ -49,12 +50,12 @@ class PolicyDialogDemoFragment : Fragment() {
                 isOutlineButtonStyle = false
 
                 //Cancel Button
-                cancelTextColor = Color.GRAY
+                cancelTextColor = Color.DKGRAY
+                cancelButtonText = getString(android.R.string.cancel)
 
                 //Accept Button
                 acceptTextColor = Color.WHITE
-                acceptButtonColor = Color.DKGRAY
-
+                acceptButtonColor = Color.BLACK
 
                 //Terms and Polices
                 policyLineTextColor = Color.DKGRAY
@@ -62,11 +63,34 @@ class PolicyDialogDemoFragment : Fragment() {
 
                 //URL highlight
                 linkTextColor = Color.BLUE
+
+                //option style
+                optionTextColor = Color.DKGRAY
+                optionCheckMarkColor = Color.DKGRAY
+
+                //EU GDPR
+                showInEUOnly = false
             }
             .addPolicyLine("This application uses a unique user identifier for advertising purposes, it is shared with third-party companies.")
             .addPolicyLine("This application sends error reports, installation and send it to a server of the Fabric.io company to analyze and process it.")
             .addPolicyLine("This application requires internet access and must collect the following information: Installed applications and history of installed applications, ip address, unique installation id, token to send notifications, version of the application, time zone and information about the language of the device.")
             .addPolicyLine("All details about the use of data are available in our Privacy Policies, as well as all Terms of Service links below.")
+
+            // Show additional checkable option to ask permission
+            .addOption(
+                DialogOption(
+                    "Allow app to collect analytics to improve the app. (Option for EU Only)",
+                    defaultValue = true,
+                    forEUOnly = true
+                )
+            )
+            .addOption(
+                DialogOption(
+                    "Allow app to collect analytics to improve the app.",
+                    defaultValue = true,
+                    forEUOnly = false
+                )
+            )
 
         policyDialog = createNewDialogFromBuilder(policyDialogBuilder)
         policyDialog.show()
@@ -104,6 +128,10 @@ class PolicyDialogDemoFragment : Fragment() {
 
                         //Exit app if declined to accept the terms
 //                        activity?.finish()
+                    }
+
+                    override fun onOptionClicked(optionIndex: Int, isChecked: Boolean) {
+                        Log.i(TAG, "onOptionClicked: optionIndex=$optionIndex isChecked=$isChecked")
                     }
                 })
             }
