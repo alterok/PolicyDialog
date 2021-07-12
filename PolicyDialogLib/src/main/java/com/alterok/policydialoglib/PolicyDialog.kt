@@ -3,6 +3,8 @@ package com.alterok.policydialoglib
 import android.content.Context.MODE_PRIVATE
 import android.content.res.ColorStateList
 import android.graphics.Color
+import android.graphics.PorterDuff
+import android.graphics.PorterDuffColorFilter
 import android.os.Build
 import android.text.Html
 import android.text.Spanned
@@ -210,12 +212,12 @@ class PolicyDialog private constructor(
         //Policies List
         dialogView.findViewById<RecyclerView>(R.id.alterok_dialog_policy_recyclerview)
             .apply {
-                backgroundTintList = ColorStateList.valueOf(
-                    if (ColorUtils.calculateLuminance(builder.backgroundColor) <= 0.5f)
-                        Color.parseColor("#14F5F5F5")
-                    else
-                        Color.parseColor("#14080808")
-                )
+                val rvBgColor = if (ColorUtils.calculateLuminance(builder.backgroundColor) <= 0.5f)
+                    Color.parseColor("#14F5F5F5")
+                else
+                    Color.parseColor("#14080808")
+
+                background.colorFilter = PorterDuffColorFilter(rvBgColor, PorterDuff.Mode.SRC_IN)
 
                 layoutManager = LinearLayoutManager(dialogView.context)
 
